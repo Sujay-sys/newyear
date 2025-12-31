@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy New Year ✨</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+
+<style>
+/* ===== BASE ===== */
+body {
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle, #020024, #090979, #000);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+    color: white;
+    text-align: center;
+}
+
+/* ===== ENTRY OVERLAY ===== */
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    animation: pulse 2s infinite;
+}
+
+.overlay span {
+    font-size: 1.5rem;
+    opacity: 0.85;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6 }
+    50% { opacity: 1 }
+    100% { opacity: 0.6 }
+}
+
+/* ===== FRONT CONTENT ===== */
+.box {
+    z-index: 2;
+}
+
+h1 {
+    font-size: 3rem;
+    margin-bottom: 25px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.reveal-btn {
+    padding: 12px 26px;
+    border: 1px solid white;
+    background-color: rgba(0,0,0,0.35);
+    color: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.3s, box-shadow 0.3s, transform 0.4s;
+}
+
+.reveal-btn:hover {
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 14px rgba(255,255,255,0.25);
+}
+
+.reveal-btn.hide {
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+}
+
+/* ===== PAPER ROLL ===== */
+.paper-roll {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0; /* will expand */
+    background: linear-gradient(to bottom, #9a2d4f, #6f1635, #3a0b1d);
+    z-index: 5;
+    overflow-y: auto;
+    transition: height 2s ease;
+    box-shadow: inset 0 -30px 40px rgba(0,0,0,0.2);
+    -webkit-overflow-scrolling: touch;
+}
+
+.paper-roll::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.02),
+        rgba(255,255,255,0.02) 1px,
+        transparent 1px,
+        transparent 12px
+    );
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.paper-roll::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(255,255,255,0.03) 0%,
+        rgba(0,0,0,0.25) 70%,
+        rgba(0,0,0,0.08) 100%
+    );
+    pointer-events: none;
+}
+
+.paper-roll.open {
+    height: 100vh;
+}
+
+/* ===== PAPER CONTENT ===== */
+.paper-content {
+    opacity: 0;
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    color: #ffffff;
+    transition: opacity 1.5s ease;
+    transition-delay: 2s;
+}
+
+.paper-content .greeting {
+    font-family: 'Caveat', cursive;
+    font-size: 2rem;
+    margin-bottom: 40px;
+    text-align: left;
+    column-count: 1;
+    line-height: 2;
+}
+
+.paper-content .main-message {
+    font-family: 'Caveat', cursive;
+    font-size: 1.6rem;
+    line-height: 2;
+    font-weight: 500;
+    max-width: 900px;
+    margin: 0 auto;
+    column-count: 2;
+    column-gap: 60px;
+    text-align: justify;
+    hyphens: auto;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+.paper-roll.open .paper-content {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .paper-content { padding: 80px 30px; }
+    .paper-content .main-message { column-count: 1; }
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    animation: fly linear infinite;
+}
+
+@keyframes fly {
+    from { transform: translateY(100vh); }
+    to { transform: translateY(-10vh); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="overlay" onclick="startExperience()">
+    <span>✨ Tap to Enter ✨</span>
+</div>
+
+<div class="box">
+    <h1>✨ Happy New Year ✨</h1>
+    <button class="reveal-btn" id="btn" onclick="revealMessage()">
+        Click to reveal your message ✨
+    </button>
+</div>
+
+<div class="paper-roll" id="paper">
+    <div class="paper-content">
+        <p class="greeting" id="greeting"></p>
+        <p class="main-message" id="message"></p>
+    </div>
+</div>
+
+<audio id="bgm" loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ===== DYNAMIC NAME =====
+const params = new URLSearchParams(window.location.search);
+const name = params.get("name") || "Friend";
+const greetingText = `Dear ${name}😸,\nHappy New Year🌸`;
+
+// ===== UNICODE-SAFE BASE64 DECODING =====
+function base64ToUtf8(str) {
+    try {
+        return decodeURIComponent(escape(atob(str)));
+    } catch(e) {
+        console.error("Failed to decode message:", e);
+        return "Oops! Something went wrong.";
+    }
+}
+
+// ===== ENCRYPTED MAIN MESSAGE =====
+// Paste your UTF-8 Base64 here (emojis safe!)
+const encryptedMessage = "TWF5IHRoaXMgeWVhciBrZWVwIHRoYXQgc21pbGUgb24geW91ciBmYWNl4oCUdGhlIHJlYWwgb25lLCB0aGUga2luZCB0aGF0IHNuZWFrcyB1cCB3aGVuIGxhdWdodGVyIHJlZnVzZXMgdG8gc3RvcC4gSSBob3BlIHdlIGtlZXAgbGF1Z2hpbmcgbGlrZSB3ZSBkbywgYXQgbm90aGluZyBhbmQgZXZlcnl0aGluZywgYmVjYXVzZSB0aG9zZSBtb21lbnRzIG1hdHRlciB0byBtZSBtb3JlIHRoYW4gSSBhZG1pdC5Tb21laG93ICwgWW914oCZdmUgYmVlbiBteSBsdWNreSBjaGFybSwgYW5kIGhvbmVzdGx5LCB0aGFuayB5b3UgZm9yIG1ha2luZyB0aGUgYnVzIHdhaXQgZm9yIG1lIGF0IHRoZSBzdG9wcGFnZSHwn6uhLiBJIGhvcGUgd2Ugc3RheSBhcm91bmQgZWFjaCBvdGhlciBmb3IgbWFueSBtb3JlIHllYXJzLCBjb2xsZWN0aW5nIG1lbW9yaWVzIPCfjKAsIGluc2lkZSBqb2tlcywgYW5kIGNoYW9zLiBJIHByb21pc2UgSeKAmWxsIGtlZXAgYW5ub3lpbmcgeW91IOKAlGl04oCZcyBraW5kIG9mIG15IHRoaW5nIG5vdyDigJRhbmQgZXZlbiB3aGVuIEkgZG9u4oCZdCBzYXkgbXVjaCB0aGVzZSwga25vdyB0aGlzOiBJIGNhcmUgZGVlcGx5LCBhbmQgSSByZXNwZWN0IHlvdSBtb3JlIHRoYW4gd29yZHMgY2FuIGNvbWZvcnRhYmx5IGhvbGQuIEFuZCBJIGhhdmUgd3JvdGUgbW9yZSAsIHNob3VsZCBJIHdyaXRlIGl0IGhlcmUgb3IgbWF5YmUgYm9yaW5nIGZvciB5b3U/IFdvdWxkIGJlIGhhcHB5IHRvIGtub3cgaWYgeW91IHdhbm5hIGtub3cgb3IgbWVoaCDwn5mC4oCN4oaV77iPLiBBbmQgd2VsbCBIZXJl4oCZcyB0byBtb3JlIHRpbWUsIG1vcmUgbGF1Z2h0ZXIsIGFuZCBtb3JlIHVzLCBqdXN0IGJlaW5nIHVzLiDinKggSeKAmW0gZ2l2aW5nIHlvdSB0aGlzIGF0IHRoZSBlbmQgYmVjYXVzZSBpdCB0b29rIGEgYml0IHRpbWUgdG8gcHV0IHRvZ2V0aGVyLCBhbmQgbWF5YmUgdGhhdCBzYXlzIHNvbWV0aGluZyBvbiBpdHMgb3duLiBObyBtYXR0ZXIgd2hlcmUgbGlmZSBwdWxscyB1cywgSeKAmWxsIGJlIHRoZXJl4oCUd2l0aCB5b3UsIGFuZCBmb3IgeW914oCUYXMgbG9uZyBhcyBJIGNhbiB3aXRoIHlvdS4gSeKAmW0gZ3JhdGVmdWwgZm9yIHRoZSB5ZWFyIHdlIG1ldCwgZm9yIGV2ZXJ5IG1vbWVudCB3ZSBzaGFyZWQsIGFuZCBJIGxvb2sgZm9yd2FyZCB0byBmaWxsaW5nIHRoZSBkYXlzIGFoZWFkIHdpdGggbW9yZSBtdXNpYywgbW9yZSBsYXVnaHRlciwgYW5kIG1vcmUgbWVtb3JpZXPigJRtYXliZSBldmVuIG1ha2luZyB5b3UgaGVhciBteSBzb25ncyBhIGxpdHRsZSBtb3JlIHRoYW4geW914oCZZCBsaWtlIPCfmLwu";
+
+// Decode at runtime
+const messageText = base64ToUtf8(encryptedMessage);
+
+// ===== EXPERIENCE FUNCTIONS =====
+function startExperience() {
+    document.querySelector('.overlay').style.display = "none";
+
+    const music = document.getElementById("bgm");
+    music.volume = 0;
+    music.play();
+
+    let vol = 0;
+    const fade = setInterval(() => {
+        if (vol < 0.6) {
+            vol += 0.02;
+            music.volume = vol;
+        } else {
+            clearInterval(fade);
+        }
+    }, 100);
+}
+
+function revealMessage() {
+    document.getElementById("btn").classList.add("hide");
+    document.getElementById("greeting").innerText = greetingText;
+    document.getElementById("message").innerText = messageText;
+    document.getElementById("paper").classList.add("open");
+}
+
+// ===== STARS =====
+for (let i = 0; i < 120; i++) {
+    const star = document.createElement("div");
+    star.className = "star";
+    star.style.left = Math.random() * 100 + "vw";
+    star.style.animationDuration = (Math.random() * 3 + 2) + "s";
+    document.body.appendChild(star);
+}
+</script>
+
+</body>
+</html>
