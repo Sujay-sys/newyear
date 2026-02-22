@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy Birthday ✨</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle, #020024, #090979, #000);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+    color: white;
+    text-align: center;
+}
+
+#lockScreen {
+    position: fixed;
+    inset: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.lock-box input {
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: none;
+    margin-top: 10px;
+}
+
+.lock-box button {
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: #b33c5e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#statusMsg {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6 }
+    50% { opacity: 1 }
+    100% { opacity: 0.6 }
+}
+
+.envelope-container {
+    position: relative;
+    width: 260px;
+    height: 180px;
+    cursor: pointer;
+    z-index: 3;
+}
+
+.envelope {
+    width: 100%;
+    height: 100%;
+    background: #b33c5e;
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    overflow: hidden;
+    transition: transform 1s ease, opacity 1s ease;
+}
+
+.flap {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #912944;
+    clip-path: polygon(0 0, 50% 60%, 100% 0);
+    transform-origin: top;
+    transition: transform 1.2s ease;
+}
+
+.letter-preview {
+    position: absolute;
+    bottom: 15px;
+    width: 100%;
+}
+
+.envelope.open .flap {
+    transform: rotateX(180deg);
+}
+
+.envelope.open {
+    transform: scale(0);
+    opacity: 0;
+}
+
+.paper-roll {
+    position: fixed;
+    inset: 0;
+    height: 0;
+    background: linear-gradient(to bottom, #9a2d4f, #6f1635, #3a0b1d);
+    z-index: 5;
+    overflow-y: auto;
+    transition: height 2s ease;
+}
+
+.paper-roll.open {
+    height: 100vh;
+}
+
+.paper-content {
+    
+    opacity: 0;
+    padding: 80px 40px;
+    transition: opacity 1.5s ease 2s;
+}
+
+.paper-roll.open .paper-content {
+    opacity: 1;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    animation: fly linear infinite;
+}
+
+@keyframes fly {
+    from { transform: translateY(110vh); }
+    to { transform: translateY(-120vh); }
+}
+</style>
+</head>
+
+<body>
+
+<div id="lockScreen">
+  <div class="lock-box">
+    <h2>🔒 Private Access</h2>
+    <input type="password" id="passwordInput" placeholder="Enter your secret key 💌">
+    <br>
+    <button onclick="unlockSite()">Unlock</button>
+    <p id="statusMsg"></p>
+  </div>
+</div>
+
+<div id="mainContent" style="display:none;">
+
+    <audio id="bgMusic" loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<div class="overlay" onclick="startExperience()">
+    <span>✨ Tap to Enter ✨</span>
+</div>
+
+<div class="envelope-container" onclick="openEnvelope()">
+    <div class="envelope" id="envelope">
+        <div class="flap"></div>
+        <div class="letter-preview">💌 Open Me</div>
+    </div>
+</div>
+
+<div class="paper-roll" id="paper">
+    <div class="paper-content">
+        <p id="greeting"></p>
+        <p id="message"></p>
+
+         <img src="bunny.gif" 
+         style="width:250px; margin-top:20px; border-radius:12px;">
+    </div>
+</div>
+
+</div>
+
+<script>
+
+// 🔐 Replace this with your generated AES string
+const encryptedMessage = "U2FsdGVkX19qnfgAO++Nugzo0u/iKfstl6Hjq/WDeKLOloqYWJkBFAH0eFZK286KswnjOYgwk6pvTSD+w8zklUYaC82JSjdeqS85McVOTbn/ytpATDcqd9odB3v0aS9KJH5CI/vjTQcXjalsM9ZG0VIjVFFEpLXPILJuwX1we5waRvXj9rk9Eo3yss7omPrIPjC2uI9CH4RFj4eo6Dw4yTa8TiAcJGsKd4rhdxvuklT/BXxSSnhNFxS28f+XShDUKJ+PQ/v9eh2Jo537v5xADn2kPot+tJJTk3LW+ZDsQp5HqwNYi++JSLgN7r9smbIEhypFu455YGS+skKkeCpWNg41v101G/YSHd/f7vygvaT0GCpbNmsYMwFaj18njk7xc1yhW+j3Mskr05wAHmOGI5WOVcxueRitsTf+kzXy+xg/Bo4odXZUI+VzxSkNiDX/R4xdEDLPoZ9qDC5H6Xar+brzB25/lVhRNOOI8whtYyAU8nrBVVMmeObDb4EiP77/kZdk6feJrvm2zHJjMO/87QchnEEUroHhz9i3Rk25NtjU/cDPhrM88c0RT9QWmJuiNKRM1XDkO9QJqkgFb0y/Efvf1LJdYsvuWbMqN4vCgZ+ZM8AXMTMkGJAFIJUEYpZmBibvMC+//q+oSt3Ysxd7gXMqKlPTYmTYYXAvCTrs3Dcs0jEpJ+KIGMC1swDMogansn1FwzOmWzzDDOgJVBdkDyhVd56XNBGqpmEinXs9j2su7RnVFG5lp1xQiANKKCRE/jvmbU6/efJw2+VhplPCng5j5247jA/yurRzufTCt6O8ISMqYXUBLx9oJHQ9Cq0neehXY07GdQeg11WhlJ5eDPv+oM1D2Wr7ge/UiwzhiD0/+UQLffQ7nscKLPxkqFmksojmBausW/6FGmzVqZ/W9waRv79yZxtWj53TtXFCrYkcQFsbUt5I4zJqMi8hdIjGfXzXRyrzIukB0A6lcUBMzwDL+tKJS2XGnZySWSw91Fy8lHXkAWivdkomEqZy9hne9qrd3ye/hOZ9XUN2IqzuInlpMaeC72kEYE3KL8ua0WrdkbV9Gdhw9ugrN54E4KKvgyFkZS4/jwxlAWPK9qng+Bk8zYJlfa4loy6m1ZRStZPrE/OBDL7jVxjduHDZtWT9GhO9fUL9MlKvIJMfsXgrv4dDK2ow/DNSfFXa0AbI6f8EQJwrEmBz12c4IeaZpD02/cVhRX+FpNzKPHi/2rQq0R+NWSWAIMEdt3du7O7EVmmrgsJCcFPzLQO9KRswPwNSeuknalOA3Bd8zK09KmNq0k/jxtCeJ9afRYjjtkTO0rNDhz5AEFwdBTGY3Xk/Bjs3gpOhjMabpVeFo94GbK+7tUYDayeeymoYm14Lxzcpgo8sMvsaeG/WSvf8phldfhHe3rTrrDsrN6cBPPZE9Y0k+x0bo9F/0Q3beLL5CFH0K8PVi3uG/RaDUCwG7SLnmR85bAI/vOonWuto73O+JQhAKs4NbrX748/M2Et6L4WqgbQD8cBKHSJQUqc4IIiEPppi0H8z0id8I8XZHHMgIffpcsGaQoySRRz1IXVdpnUz5vrp1i6qFBbazjwSZCUyHA8+meuAgT9KH5+5W2Tjo4SEPGfKtsWOrpIpw5BUg/uqUIy5itTQLwJqBs+PScdKyp7+zjt8NWnFwACWn0GbR/pvf88cOJZ7kTBGKtCO0YNQxKv6brztAQjzbpMF6mTQrAqYsdk9D319Qf8k8RQnK3+Ung==";
+
+function unlockSite() {
+    const password = document.getElementById("passwordInput").value;
+
+    try {
+        const bytes = CryptoJS.AES.decrypt(encryptedMessage, password);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (!decrypted) throw "Wrong";
+
+        document.getElementById("statusMsg").style.color = "lightgreen";
+        document.getElementById("statusMsg").innerText = "Correct ❤️";
+
+        setTimeout(() => {
+            document.getElementById("lockScreen").style.display = "none";
+            document.getElementById("mainContent").style.display = "block";
+            document.getElementById("message").innerText = decrypted;
+        }, 1000);
+
+    } catch {
+        document.getElementById("statusMsg").style.color = "red";
+        document.getElementById("statusMsg").innerText = "Wrong key 🥀";
+    }
+}
+
+const params = new URLSearchParams(window.location.search);
+const name = params.get("name") || "One";
+document.getElementById("greeting").innerText = `Dear ${name}, Happy Birthday ✨`;
+
+function startExperience() {
+    document.querySelector('.overlay').style.display = "none";
+
+    const music = document.getElementById("bgMusic");
+    music.play().catch(err => {
+        console.log("Music failed:", err);
+    });
+}
+
+function openEnvelope() {
+    document.getElementById("envelope").classList.add("open");
+    setTimeout(() => {
+        document.getElementById("paper").classList.add("open");
+    }, 1500);
+}
+
+for (let i = 0; i < 120; i++) {
+    const star = document.createElement("div");
+    star.className = "star";
+    star.style.left = Math.random() * 100 + "vw";
+    star.style.animationDuration = (Math.random() * 3 + 2) + "s";
+    document.body.appendChild(star);
+}
+
+</script>
+
+</body>
+</html>
